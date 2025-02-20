@@ -4,6 +4,7 @@ import axios from "axios";
 const CountdownTimer = ({ onCountdownUpdate }) => {
   const [latestAuction, setLatestAuction] = useState(null);
   const [timeLeft, setTimeLeft] = useState(null);
+  const [status, setStatus] = useState("Loading...");
 
   // Fetch latest auction
   const fetchAuctions = async () => {
@@ -21,47 +22,57 @@ const CountdownTimer = ({ onCountdownUpdate }) => {
         setLatestAuction(latest);
       } else {
         console.warn("No auctions found.");
+        setStatus("No auctions available");
       }
     } catch (error) {
       console.error("Error fetching auctions:", error);
+      setStatus("Error fetching auctions");
     }
   };
 
-  // Calculate countdown time left
+  // Calculate countdown time left and determine status
   useEffect(() => {
     if (!latestAuction) return;
 
     const updateCountdown = () => {
       const now = new Date();
 
-      // Construct endDateTime correctly
+      const startDateTime = new Date(latestAuction.start_date);
       const endDateTime = new Date(latestAuction.end_date);
       const [hours, minutes, seconds] = latestAuction.end_time.split(":").map(Number);
       
-      // Ensure the date is correctly set
+      // Ensure the time is set correctly
       endDateTime.setHours(hours, minutes, seconds, 0);
 
-      if (isNaN(endDateTime.getTime())) {
-        console.error("Invalid endDateTime:", endDateTime);
-        setTimeLeft("Invalid auction time");
+      if (isNaN(startDateTime.getTime()) || isNaN(endDateTime.getTime())) {
+        console.error("Invalid auction dates:", startDateTime, endDateTime);
+        setStatus("Invalid auction time");
+        setTimeLeft(null);
         return;
       }
 
-      const difference = endDateTime - now;
-
-      if (difference <= 0) {
-        setTimeLeft("Auction ended");
+      if (now < startDateTime) {
+        setStatus("Upcoming");
+        setTimeLeft(null);
         return;
       }
 
-      const hoursLeft = Math.floor(difference / (1000 * 60 * 60));
-      const minutesLeft = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
-      const secondsLeft = Math.floor((difference % (1000 * 60)) / 1000);
+      if (now >= startDateTime && now < endDateTime) {
+        setStatus("Active");
+        const difference = endDateTime - now;
 
-      setTimeLeft(`${hoursLeft}h ${minutesLeft}m ${secondsLeft}s`);
+        const hoursLeft = Math.floor(difference / (1000 * 60 * 60));
+        const minutesLeft = Math.floor((difference % (1000 * 60 * 60)) / (1000 * 60));
+        const secondsLeft = Math.floor((difference % (1000 * 60)) / 1000);
+
+        setTimeLeft(`${hoursLeft}h ${minutesLeft}m ${secondsLeft}s`);
+      } else {
+        setStatus("Auction ended");
+        setTimeLeft(null);
+      }
     };
 
-    updateCountdown(); // Call once immediately to avoid delay
+    updateCountdown(); // Call immediately
     const interval = setInterval(updateCountdown, 1000);
 
     return () => clearInterval(interval);
@@ -87,11 +98,20 @@ const CountdownTimer = ({ onCountdownUpdate }) => {
           <p><strong>Start Date:</strong> {new Date(latestAuction.start_date).toLocaleString()}</p>
           <p><strong>End Date:</strong> {new Date(latestAuction.end_date).toLocaleString()}</p>
           <p><strong>End Time:</strong> {latestAuction.end_time}</p>
-          <p><strong>Countdown:</strong> {timeLeft || "Calculating..."}</p>
+          <p className="status"><strong>Status:</strong> {status}</p>
+          {status === "Active" && <p><strong>Countdown:</strong> {timeLeft || "Calculating..."}</p>}
         </>
       ) : (
-        <p>Loading auctions...</p>
+        <p>{status}</p>
       )}
+        <style jsx>{`
+              
+                .status {
+                    font-size: 18px;
+                    color: ${status === "Active" ? "green" : status === "Auction ended" ? "red" : "blue"};
+                    font-weight: bold;
+                }
+            `}</style>
     </div>
   );
 };

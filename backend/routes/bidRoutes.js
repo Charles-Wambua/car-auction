@@ -2,44 +2,63 @@ const express = require('express');
 const pool = require('../config/db'); // PostgreSQL connection
 const router = express.Router();
 
-router.post('/bids', async (req, res) => {
+router.post("/bids", async (req, res) => {
+    console.log("reddddd", req.body);
     try {
-        console.log("bids", req.body)
-        const { listing_id, amount } = req.body;
+        const { listing_id, bidder, amount } = req.body;
 
-        if (!amount || isNaN(amount) || amount <= 0) {
-            return res.status(400).json({ message: 'Invalid bid amount' });
+        if (!listing_id || !bidder || !amount || parseFloat(amount) <= 0) {
+            return res.status(400).json({ message: "Invalid bid data provided" });
         }
 
-        const listingQuery = 'SELECT base_price, start_time, end_time FROM listings WHERE id = $1';
-        const listingResult = await pool.query(listingQuery, [listing_id]);
+        // Fetch listing details
+        const listingQuery = await pool.query(
+            "SELECT * FROM listings WHERE id = $1",
+            [listing_id]
+        );
 
-        if (listingResult.rows.length === 0) {
-            return res.status(404).json({ message: 'Listing not found' });
+        if (listingQuery.rows.length === 0) {
+            return res.status(404).json({ message: "Listing not found" });
         }
 
-        const { base_price, start_time, end_time } = listingResult.rows[0];
-        const now = new Date();
+        const listing = listingQuery.rows[0];
+        const { auction_id, base_price } = listing;
 
-        if (now < new Date(start_time) || now > new Date(end_time)) {
-            return res.status(400).json({ message: 'Bidding is closed for this listing' });
+        // Check the highest current bid for this listing
+        const highestBidQuery = await pool.query(
+            "SELECT MAX(amount) AS highest_bid FROM bids WHERE listing_id = $1",
+            [listing_id]
+        );
+        const highestBid = highestBidQuery.rows[0]?.highest_bid || 0;
+
+        // ✅ Define is_below_base_price before using it
+        const is_below_base_price = parseFloat(amount) < parseFloat(base_price);
+
+        // ✅ Insert the bid (bidder as TEXT, user_id NULL since no UUID is given)
+        await pool.query(
+            `INSERT INTO bids (auction_id, listing_id, user_id, amount, is_below_base_price, bidder) 
+             VALUES ($1, $2, NULL, $3, $4, $5)`,
+            [auction_id, listing_id, parseFloat(amount), is_below_base_price, bidder]
+        );
+
+        // If the new bid is the highest, update the "Current Best Offer" (only if best_offer column exists)
+        if (parseFloat(amount) > highestBid) {
+            await pool.query(
+                `UPDATE listings SET best_offer = $1, best_bidder = $2 WHERE id = $3`,
+                [parseFloat(amount), bidder, listing_id]
+            );
         }
-
-        const bidQuery = 'INSERT INTO bids (listing_id, amount) VALUES ($1, $2) RETURNING *';
-        const bidResult = await pool.query(bidQuery, [listing_id, amount]);
 
         return res.status(201).json({
-            message: amount < base_price ? 'Bid placed, but below base price!' : 'Bid placed successfully!',
-            bid: bidResult.rows[0]
+            message: "Bid placed successfully",
+            is_below_base_price,
         });
     } catch (error) {
-        console.error('Error placing bid:', error);
-        res.status(500).json({ message: 'Internal Server Error' });
+        console.error("Error placing bid:", error);
+        return res.status(500).json({ message: "Internal server error" });
     }
 });
 
-
-// ✅ GET ALL BIDS (GET /api/bids)
 router.get('/bidsget', async (req, res) => {
     try {
         const bidsQuery = `
@@ -55,42 +74,55 @@ router.get('/bidsget', async (req, res) => {
         res.status(500).json({ message: 'Internal Server Error' });
     }
 });
-// router.get('/bidsget/:id', async (req, res) => {
-//     try {
-//         res.setHeader('Cache-Control', 'no-store'); // Prevents caching
 
-//         const id = req.params.id; // UUID as string
-//         console.log("Fetching bids for listing ID:", id);
+router.get("/best", async (req, res) => {
+    try {
+        const bestBidsQuery = await pool.query(`
+            SELECT b.listing_id, b.bidder, b.amount, b.created_at
+            FROM bids b
+            WHERE b.amount = (
+                SELECT MAX(amount) 
+                FROM bids 
+                WHERE listing_id = b.listing_id
+            )
+            ORDER BY b.listing_id;
+        `);
 
-//         // Validate UUID format
-//         const uuidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
-//         if (!uuidRegex.test(id)) {
-//             return res.status(400).json({ message: 'Invalid UUID format' });
-//         }
+        return res.status(200).json(bestBidsQuery.rows);
+    } catch (error) {
+        console.error("Error fetching best bids:", error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+});
+router.get("/best/:id", async (req, res) => {
+    const { id } = req.params; // Extract auction ID from request parameters
 
-//         // Query to fetch bids
-//         const bidsQuery = `
-//             SELECT b.id, b.amount, b.created_at, l.title AS listing_title
-//             FROM bids b
-//             JOIN listings l ON b.listing_id = l.id
-//             WHERE b.listing_id = $1
-//             ORDER BY b.created_at DESC
-//         `;
+    try {
+        const bestBidQuery = await pool.query(
+            `
+            SELECT b.listing_id, b.bidder, b.amount, b.created_at
+            FROM bids b
+            WHERE b.listing_id = $1
+            AND b.amount = (
+                SELECT MAX(amount) 
+                FROM bids 
+                WHERE listing_id = $1
+            )
+            LIMIT 1;
+            `,
+            [id] // Pass the ID safely to prevent SQL injection
+        );
 
-//         const result = await pool.query(bidsQuery, [id]);
+        if (bestBidQuery.rows.length === 0) {
+            return res.status(404).json({ message: "No bids found for this auction" });
+        }
 
-//         // If the bids table is empty or no bids exist for the listing
-//         if (result.rowCount === 0) {
-//             return res.status(200).json([]); // Return an empty array instead of an error
-//         }
-
-//         res.json(result.rows);
-//     } catch (error) {
-//         console.error('Error fetching bids:', error);
-//         res.status(500).json({ message: 'Internal Server Error' });
-//     }
-// });
-
+        return res.status(200).json(bestBidQuery.rows[0]);
+    } catch (error) {
+        console.error("Error fetching best bid:", error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+});
 
 
 

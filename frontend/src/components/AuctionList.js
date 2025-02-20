@@ -7,8 +7,9 @@ import CountdownTimer from './countDownTimer';
 const AuctionList = () => {
   const [listings, setListings] = useState([]);
   const [bids, setBids] = useState({});
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [bestBid, setBestBid] = useState('');
   const [filters, setFilters] = useState({ year: '' });
   const [sortOrder, setSortOrder] = useState('asc');
   const [selectedAuction, setSelectedAuction] = useState(null);
@@ -23,6 +24,7 @@ const AuctionList = () => {
 
   useEffect(() => {
     fetchListings();
+    fetchBestBid()
   }, []);
 
   const fetchListings = async () => {
@@ -34,6 +36,30 @@ const AuctionList = () => {
     } catch (err) {
       console.error('Error fetching listings:', err);
       setError('Failed to load listings');
+    } finally {
+      setLoading(false);
+    }
+  };
+  const fetchBestBid = async () => {
+    try {
+      const response = await axios.get('http://localhost:5000/api/bids/best', {
+        headers: { 'Cache-Control': 'no-cache' }
+      });
+
+      // Transform data into a lookup object: { listing_id: { amount, bidder, count } }
+      const bidMap = response.data.reduce((acc, bid) => {
+        acc[bid.listing_id] = {
+          amount: parseFloat(bid.amount).toLocaleString(), // Format currency
+          bidder: bid.bidder,
+          count: bid.count || 1, // Ensure count exists
+        };
+        return acc;
+      }, {});
+
+      setBestBid(bidMap);
+    } catch (err) {
+      console.error('Error fetching bids:', err);
+      setError('Failed to load bids');
     } finally {
       setLoading(false);
     }
@@ -149,17 +175,28 @@ const AuctionList = () => {
 
       {/* Listings Section */}
       <div style={styles.list}>
-        {filteredListings.map(item => (
-          <div key={item.id} style={styles.card} onClick={() => handleCardClick(item)}>
-            <img src={item.image_url} alt={item.title} style={styles.image} />
-            <h3>{item.title}</h3>
-            <p>{item.description}</p>
-            <p><strong>Base Price:</strong> ${parseFloat(item.base_price).toLocaleString()}</p>
-            <p><strong>Best Offer:</strong> {bids[item.id] || 'No bids yet'}</p>
-            <p><strong>Countdown:</strong> {countdown}</p>
-          </div>
-        ))}
+        {filteredListings.map(item => {
+          const bestBidData = bestBid[item.id]; // Get best bid data for this listing
+
+          return (
+            <div key={item.id} style={styles.card} onClick={() => handleCardClick(item)}>
+              <img src={item.image_url} alt={item.title} style={styles.image} />
+              <h3>{item.title}</h3>
+              <p>{item.description}</p>
+              <p><strong>Base Price:</strong> ${parseFloat(item.base_price).toLocaleString()}</p>
+              <p>
+                <strong>Best Offer:</strong>{' '}
+                {bestBidData ? `$${bestBidData.amount} by ${bestBidData.bidder}` : 'No bids yet'}
+              </p>
+              <p>
+                <strong>Total Bids:</strong> {bestBidData?.count || 0}
+              </p>
+              <p><strong>Countdown:</strong> {countdown}</p>
+            </div>
+          );
+        })}
       </div>
+
 
       {/* Auction Modal */}
       <Modal

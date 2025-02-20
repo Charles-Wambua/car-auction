@@ -16,6 +16,8 @@ CREATE TABLE auctions (
     auction_number VARCHAR(50) UNIQUE NOT NULL,
     start_time TIMESTAMP NOT NULL,
     end_time TIMESTAMP NOT NULL,
+    start_date TIMESTAMP NOT NULL,
+    end_date TIMESTAMP NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -74,3 +76,7 @@ INSERT INTO listings (id, auction_id, title, description, base_price, image_url,
 (uuid_generate_v4(), (SELECT id FROM auctions WHERE auction_number = 'AUCTION-005'), '2020 Mercedes C-Class', 'Luxury sedan with cutting-edge tech.', 38000, 'https://storage.googleapis.com/images-auction/merc-c-class.png', NOW()),
 (uuid_generate_v4(), (SELECT id FROM auctions WHERE auction_number = 'AUCTION-005'), '2015 Hyundai Elantra', 'Affordable and fuel-efficient.', 12000, 'https://storage.googleapis.com/images-auction/hyudaielatra.jpg', NOW());
 
+ALTER TABLE bids ADD COLUMN is_below_base_price BOOLEAN DEFAULT FALSE;
+ALTER TABLE bids ADD COLUMN bidder TEXT;
+ALTER TABLE listings ADD COLUMN best_offer DECIMAL(10,2);
+ALTER TABLE listings ADD COLUMN best_bidder TEXT;
