@@ -94,6 +94,16 @@ router.get("/best", async (req, res) => {
         return res.status(500).json({ message: "Internal server error" });
     }
 });
+router.delete("/reset", async (req, res) => {
+    try {
+        await pool.query("DELETE FROM bids");
+        return res.status(200).json({ message: "All bids have been reset." });
+    } catch (error) {
+        console.error("Error resetting bids:", error);
+        return res.status(500).json({ message: "Internal server error" });
+    }
+});
+
 router.get("/best/:id", async (req, res) => {
     const { id } = req.params; // Extract auction ID from request parameters
 

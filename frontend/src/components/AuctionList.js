@@ -189,9 +189,6 @@ const AuctionList = () => {
                 <strong>Best Offer:</strong>{' '}
                 {bestBidData ? `$${bestBidData.amount} by ${bestBidData.bidder}` : 'No bids yet'}
               </p>
-              <p>
-                <strong>Total Bids:</strong> {bestBidData?.count || 0}
-              </p>
               <p><strong>Countdown:</strong> {countdown}</p>
             </div>
           );

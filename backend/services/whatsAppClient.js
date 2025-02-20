@@ -1,10 +1,12 @@
 const { Client, LocalAuth } = require("whatsapp-web.js");
 const qrcode = require("qrcode-terminal");
 
-// Initialize WhatsApp Web client
 const client = new Client({
-  authStrategy: new LocalAuth(), // Stores session data to avoid re-login
+  authStrategy: new LocalAuth({
+    dataPath: "/home/user/whatsapp-session" // Change path as needed
+  }),
 });
+
 
 client.on("qr", (qr) => {
   console.log("Scan the QR code to log in:");
