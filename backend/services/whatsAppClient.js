@@ -1,5 +1,6 @@
 const { Client, LocalAuth } = require("whatsapp-web.js");
 const qrcode = require("qrcode-terminal");
+const fs = require("fs");
 
 const client = new Client({
   authStrategy: new LocalAuth({
@@ -8,9 +9,15 @@ const client = new Client({
 });
 
 
-client.on("qr", (qr) => {
-  console.log("Scan the QR code to log in:");
-  qrcode.generate(qr, { small: true });
+// client.on("qr", (qr) => {
+//   console.log("Scan the QR code to log in:");
+//   qrcode.generate(qr, { small: true });
+// });
+
+client.on("qr", async (qr) => {
+  console.log("📌 Scan the QR code from qr.png");
+  const qrCodeFilePath = "/tmp/whatsapp_qr.png";
+  await require("qrcode").toFile(qrCodeFilePath, qr);
 });
 
 client.on("ready", () => {
