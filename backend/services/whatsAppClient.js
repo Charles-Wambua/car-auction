@@ -3,10 +3,12 @@ const qrcode = require("qrcode-terminal");
 
 const client = new Client({
   authStrategy: new LocalAuth({
-    dataPath: "/home/user/whatsapp-session" 
+    dataPath: "/home/user/whatsapp-session",
   }),
+  puppeteer: {
+    args: ["--no-sandbox", "--disable-setuid-sandbox"],
+  },
 });
-
 
 client.on("qr", (qr) => {
   console.log("Scan the QR code to log in:");
@@ -17,7 +19,7 @@ client.on("ready", () => {
   console.log("✅ WhatsApp Client is ready!");
 });
 
-client.initialize(); 
+client.initialize();
 
 const sendWhatsAppMessage = async (phoneNumber, message) => {
   try {
@@ -29,7 +31,10 @@ const sendWhatsAppMessage = async (phoneNumber, message) => {
 
     const isRegistered = await client.isRegisteredUser(whatsappId);
     if (!isRegistered) {
-      console.error("⚠️ Error: Phone number is not registered on WhatsApp:", phoneNumber);
+      console.error(
+        "⚠️ Error: Phone number is not registered on WhatsApp:",
+        phoneNumber
+      );
       return;
     }
 
