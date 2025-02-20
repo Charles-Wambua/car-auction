@@ -61,9 +61,8 @@ router.get('/:id', async (req, res) => {
 });
 router.post("/auction/end", async (req, res) => {
     const { auction, winningBid } = req.body;
-    const phoneNumber = "254114652533"; // Use a test number
+    const phoneNumber = "254114652533"; 
 
-    // Format message with emojis, spacing, and better styling
     const message = winningBid
         ? `🏆 *Auction Ended!*\n\n`
           + `📌 *Auction ID:*  \n ➤ _${auction.id}_\n\n`

@@ -47,12 +47,11 @@ const AuctionList = () => {
         headers: { 'Cache-Control': 'no-cache' }
       });
 
-      // Transform data into a lookup object: { listing_id: { amount, bidder, count } }
       const bidMap = response.data.reduce((acc, bid) => {
         acc[bid.listing_id] = {
-          amount: parseFloat(bid.amount).toLocaleString(), // Format currency
+          amount: parseFloat(bid.amount).toLocaleString(),
           bidder: bid.bidder,
-          count: bid.count || 1, // Ensure count exists
+          count: bid.count || 1,
         };
         return acc;
       }, {});
@@ -132,7 +131,6 @@ const AuctionList = () => {
       <h2>Available Auctions</h2>
       <CountdownTimer onCountdownUpdate={setCountdown} />
 
-      {/* Filters & Sorting Section */}
       <div style={styles.filters}>
         <label>Filter by Year:</label>
         <select value={filters.year} onChange={handleFilterChange} style={styles.select}>
@@ -146,7 +144,6 @@ const AuctionList = () => {
           Sort by Price ({sortOrder === 'asc' ? 'Low to High' : 'High to Low'})
         </button>
 
-        {/* Auction Date Selection */}
         <div style={styles.datePickerContainer}>
           <DatePicker
             placeholder="Start Date"
@@ -174,10 +171,9 @@ const AuctionList = () => {
         </div>
       </div>
 
-      {/* Listings Section */}
       <div style={styles.list}>
         {filteredListings.map(item => {
-          const bestBidData = bestBid[item.id]; // Get best bid data for this listing
+          const bestBidData = bestBid[item.id];
 
           return (
             <div key={item.id} style={styles.card} onClick={() => handleCardClick(item)}>
@@ -196,25 +192,24 @@ const AuctionList = () => {
       </div>
 
 
-      {/* Auction Modal */}
       <Modal
-  title="Auction Details"
-  open={isModalVisible}
-  onCancel={handleModalClose}
-  footer={null}
-  centered
-  width={Math.min(window.innerWidth * 0.9, 1200)}
-  style={{ top: 20 }}
-  bodyStyle={{
-    padding: 20,
-    backgroundColor: '#f8f8f8',
-    borderRadius: '12px',
-    maxHeight: '80vh',
-    overflowY: 'auto'
-  }}
->
-  {selectedAuction && <AuctionModal key={selectedAuction.id} auction={selectedAuction} />}
-</Modal>
+        title="Auction Details"
+        open={isModalVisible}
+        onCancel={handleModalClose}
+        footer={null}
+        centered
+        width={Math.min(window.innerWidth * 0.9, 1200)}
+        style={{ top: 20 }}
+        bodyStyle={{
+          padding: 20,
+          backgroundColor: '#f8f8f8',
+          borderRadius: '12px',
+          maxHeight: '80vh',
+          overflowY: 'auto'
+        }}
+      >
+        {selectedAuction && <AuctionModal key={selectedAuction.id} auction={selectedAuction} bestBid={bestBid} />}
+      </Modal>
     </div>
   );
 };

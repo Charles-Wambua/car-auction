@@ -1,7 +1,6 @@
--- Enable UUID extension
+
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Users table to store bidder information
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(255) NOT NULL,
@@ -10,7 +9,6 @@ CREATE TABLE users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Auctions table
 CREATE TABLE auctions (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     auction_number VARCHAR(50) UNIQUE NOT NULL,
@@ -21,18 +19,16 @@ CREATE TABLE auctions (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Listings table
 CREATE TABLE listings (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     auction_id UUID REFERENCES auctions(id) ON DELETE CASCADE,
     title VARCHAR(255) NOT NULL,
     description TEXT,
     base_price DECIMAL(10,2) NOT NULL,
-    image_url TEXT NOT NULL, -- Stores GCS image links
+    image_url TEXT NOT NULL, 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Bids table tracking auction participation
 CREATE TABLE bids (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     auction_id UUID REFERENCES auctions(id) ON DELETE CASCADE,
@@ -42,7 +38,6 @@ CREATE TABLE bids (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Table to track bidders participating in an auction
 CREATE TABLE bidders (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     user_id UUID REFERENCES users(id) ON DELETE CASCADE,
@@ -50,7 +45,6 @@ CREATE TABLE bidders (
     joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Insert sample auctions
 INSERT INTO auctions (id, auction_number, start_time, end_time) VALUES
 (uuid_generate_v4(), 'AUCTION-001', NOW(), NOW() + INTERVAL '7 days'),
 (uuid_generate_v4(), 'AUCTION-002', NOW(), NOW() + INTERVAL '7 days'),
@@ -63,7 +57,6 @@ INSERT INTO auctions (id, auction_number, start_time, end_time) VALUES
 (uuid_generate_v4(), 'AUCTION-009', NOW(), NOW() + INTERVAL '7 days'),
 (uuid_generate_v4(), 'AUCTION-010', NOW(), NOW() + INTERVAL '7 days');
 
--- Insert sample listings (adjust auction_id manually to match the inserted auction UUIDs)
 INSERT INTO listings (id, auction_id, title, description, base_price, image_url, created_at) VALUES
 (uuid_generate_v4(), (SELECT id FROM auctions WHERE auction_number = 'AUCTION-001'), '2020 Tesla Model S', 'Luxury electric sedan with autopilot.', 50000, 'https://storage.googleapis.com/images-auction/tesla.jpg', NOW()),
 (uuid_generate_v4(), (SELECT id FROM auctions WHERE auction_number = 'AUCTION-001'), '2018 Honda Civic', 'Reliable and fuel-efficient compact car.', 18000, 'https://storage.googleapis.com/images-auction/hondacivic.jpg', NOW()),

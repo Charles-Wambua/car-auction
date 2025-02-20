@@ -1,5 +1,5 @@
 const express = require('express');
-const pool = require('../config/db'); // PostgreSQL connection
+const pool = require('../config/db'); 
 const router = express.Router();
 
 router.post("/bids", async (req, res) => {
@@ -105,7 +105,7 @@ router.delete("/reset", async (req, res) => {
 });
 
 router.get("/best/:id", async (req, res) => {
-    const { id } = req.params; // Extract auction ID from request parameters
+    const { id } = req.params;
 
     try {
         const bestBidQuery = await pool.query(
@@ -120,7 +120,7 @@ router.get("/best/:id", async (req, res) => {
             )
             LIMIT 1;
             `,
-            [id] // Pass the ID safely to prevent SQL injection
+            [id] 
         );
 
         if (bestBidQuery.rows.length === 0) {

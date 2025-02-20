@@ -7,20 +7,19 @@ const CountdownTimer = ({ onCountdownUpdate }) => {
   const [latestAuction, setLatestAuction] = useState(null);
   const [timeLeft, setTimeLeft] = useState(null);
   const [status, setStatus] = useState("Loading...");
-  const [resetting, setResetting] = useState(false); // Track reset state
+  const [resetting, setResetting] = useState(false); 
 
-  // Fetch latest auction
   const fetchAuctions = async () => {
     try {
       const res = await baseUrl.get("/api/auctions/auction-dates");
-      console.log("Fetched auctions:", res.data);
+      // console.log("Fetched auctions:", res.data);
 
       if (res.data.length > 0) {
         const latest = res.data.reduce((latest, current) =>
           new Date(current.created_at) > new Date(latest.created_at) ? current : latest
         );
 
-        console.log("Latest auction selected:", latest);
+      
         setLatestAuction(latest);
       } else {
         console.warn("No auctions found.");
@@ -32,10 +31,9 @@ const CountdownTimer = ({ onCountdownUpdate }) => {
     }
   };
 
- // Reset bids function
 const resetBids = async () => {
   if (!window.confirm("Are you sure you want to reset all bids?")) {
-    return; // Prevent accidental resets
+    return; 
   }
 
   setResetting(true);
@@ -52,8 +50,6 @@ const resetBids = async () => {
 };
 
 
-
-  // Calculate countdown time left and determine status
   useEffect(() => {
     if (!latestAuction) return;
 
@@ -93,20 +89,18 @@ const resetBids = async () => {
       }
     };
 
-    updateCountdown(); // Call immediately
+    updateCountdown();
     const interval = setInterval(updateCountdown, 1000);
 
     return () => clearInterval(interval);
   }, [latestAuction]);
 
-  // Pass countdown to parent
   useEffect(() => {
     if (onCountdownUpdate) {
       onCountdownUpdate(timeLeft);
     }
   }, [timeLeft, onCountdownUpdate]);
 
-  // Fetch auctions on mount
   useEffect(() => {
     fetchAuctions();
   }, []);

@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { message } from "antd";
+import { message, Modal } from "antd";
 import CountdownTimer from "../components/countDownTimer";
 import { baseUrl } from "../services/AxiosConf";
 
-const AuctionModal = ({ auction, onClose }) => {
+const AuctionModal = ({ auction, onClose, bestBid }) => {
     const [status, setStatus] = useState("Upcoming");
     const [winningBid, setWinningBid] = useState(null);
     const [bidAmount, setBidAmount] = useState("");
@@ -12,6 +12,7 @@ const AuctionModal = ({ auction, onClose }) => {
     const [bids, setBids] = useState([]);
 
     useEffect(() => {
+        //("rece auction", auction)
         fetchBids();
     }, []);
 
@@ -23,7 +24,6 @@ const AuctionModal = ({ auction, onClose }) => {
         try {
             const response = await baseUrl.get(`/api/bids/best/${auction.id}`);
             setBids(response.data);
-
         } catch (error) {
             console.error("Error fetching bids:", error);
         }
@@ -44,24 +44,48 @@ const AuctionModal = ({ auction, onClose }) => {
         }
     };
 
+    const getBestBidAmount = () => {
+      
+
+        if (!Array.isArray(bestBid)) {
+            console.error("bestBid is not an array:", bestBid);
+            return 0;
+        }
+
+        const bestBidForAuction = bestBid.find(bid => bid.listing_id === auction.id);
+        return bestBidForAuction ? parseFloat(bestBidForAuction.amount) : 0;
+    };
+
+
     const placeBid = async () => {
-        if (!bidAmount || parseFloat(bidAmount) <= 0) {
+        const bidValue = parseFloat(bidAmount);
+    
+        if (!bidAmount || bidValue <= 0) {
             message.warning("Please enter a valid bid amount!");
             return;
         }
-
+    
         if (!bidder.trim()) {
             message.warning("Please enter your name to place a bid!");
             return;
         }
-
+        if (bidValue < auction.best_offer) {
+            const isConfirmed = window.confirm(
+                `Your bid of $${bidAmount} is lower than the best bid of $${auction.best_offer}. Do you still want to proceed?`
+            );
+    
+            if (!isConfirmed) {
+                return; 
+            }
+        }
+    
         try {
             await baseUrl.post("/api/bids/bids", {
                 listing_id: auction.id,
-                amount: parseFloat(bidAmount),
-                bidder
+                amount: bidValue,
+                bidder,
             });
-
+    
             message.success(`Bid placed successfully by ${bidder}!`);
             setBidAmount("");
             setBidder("");
@@ -71,9 +95,10 @@ const AuctionModal = ({ auction, onClose }) => {
             message.error(error.response?.data?.message || "Failed to place bid. Please try again.");
         }
     };
+    
+
 
     const handleCountdownUpdate = (timeLeft) => {
-
         if (timeLeft === "0h 0m 0s") {
             setStatus("ended");
         } else if (!timeLeft) {
@@ -83,7 +108,6 @@ const AuctionModal = ({ auction, onClose }) => {
         }
     };
 
-
     return (
         <div className="modal-overlay">
             <div className="modal-content">
@@ -92,8 +116,10 @@ const AuctionModal = ({ auction, onClose }) => {
                     <div className="auction-details">
                         <h2 className="auction-title">{auction.title}</h2>
                         <CountdownTimer onCountdownUpdate={handleCountdownUpdate} />
-
-                        {status !== "ended"  &&  status !== "completed" &&(
+                        <p>   <strong>Best Offer:</strong>{' '}
+                            {bestBid ? `$${auction.best_offer}` : 'No bids yet'}
+                        </p>
+                        {status !== "ended" && status !== "completed" && (
                             <div className="bid-section">
                                 <input
                                     type="text"
@@ -109,7 +135,9 @@ const AuctionModal = ({ auction, onClose }) => {
                                     onChange={(e) => setBidAmount(e.target.value)}
                                     className="bid-input"
                                 />
-                                <button onClick={placeBid} className="bid-button">Submit Bid</button>
+                                <button onClick={placeBid} className="bid-button">
+                                    Submit Bid
+                                </button>
                             </div>
                         )}
                     </div>
@@ -122,15 +150,18 @@ const AuctionModal = ({ auction, onClose }) => {
                         <h3 className="section-title">Auction Results</h3>
                         {winningBid ? (
                             <>
-                                <p className="winning-bid"><strong>Winning Bid:</strong> ${winningBid.amount}</p>
-                                <p className="winning-user"><strong>Winning User:</strong> {winningBid.bidder}</p>
+                                <p className="winning-bid">
+                                    <strong>Winning Bid:</strong> ${winningBid.amount}
+                                </p>
+                                <p className="winning-user">
+                                    <strong>Winning User:</strong> {winningBid.bidder}
+                                </p>
                             </>
                         ) : (
                             <p className="no-winner">No winners</p>
                         )}
                     </div>
                 )}
-
             </div>
 
             <style jsx>{`
