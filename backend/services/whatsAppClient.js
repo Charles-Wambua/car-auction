@@ -1,23 +1,28 @@
 const { Client, LocalAuth } = require("whatsapp-web.js");
 const qrcode = require("qrcode-terminal");
-const fs = require("fs");
 
 const client = new Client({
-  authStrategy: new LocalAuth({
-    dataPath: "/home/user/whatsapp-session" // Change path as needed
-  }),
+  authStrategy: new LocalAuth(),
+  puppeteer: {
+    args: ["--no-sandbox", "--disable-setuid-sandbox"], // 👈 Add these args
+  },
 });
-
 
 // client.on("qr", (qr) => {
 //   console.log("Scan the QR code to log in:");
 //   qrcode.generate(qr, { small: true });
 // });
 
-client.on("qr", async (qr) => {
-  console.log("📌 Scan the QR code from qr.png");
+client.on("qr", (qr) => {
+  console.log("📌 Scan the QR code below:");
+  qrcode.generate(qr, { small: true });
+
+  // Save QR code to a file
   const qrCodeFilePath = "/tmp/whatsapp_qr.png";
-  await require("qrcode").toFile(qrCodeFilePath, qr);
+  require("qrcode").toFile(qrCodeFilePath, qr, (err) => {
+    if (err) console.error("❌ Error saving QR code:", err);
+    else console.log("✅ QR code saved to", qrCodeFilePath);
+  });
 });
 
 client.on("ready", () => {
