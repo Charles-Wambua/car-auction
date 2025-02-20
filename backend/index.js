@@ -3,7 +3,8 @@ const express = require('express');
 const morgan = require('morgan');
 const cors = require('cors');
 const auctionRoutes = require('./routes/auctionRoutes');
-const bidRoutes = require('./routes/bidRoutes')
+const bidRoutes = require('./routes/bidRoutes');
+require('./services/whatsAppClient'); // This ensures WhatsApp client starts automatically
 
 const app = express();
 

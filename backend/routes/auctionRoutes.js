@@ -2,6 +2,7 @@ const express = require('express');
 const { createAuction, getAuctions,getListings } = require('../controllers/auctionController');
 const router = express.Router();
 const pool = require('../config/db');
+const {sendWhatsAppMessage} = require('../services/whatsAppClient')
 
 router.get('/', (req, res) => {
   console.log('🔍 GET /api/auctions hit!');
@@ -58,6 +59,33 @@ router.get('/:id', async (req, res) => {
       res.status(500).json({ error: 'Server error' });
   }
 });
+router.post("/auction/end", async (req, res) => {
+    const { auction, winningBid } = req.body;
+    const phoneNumber = "254114652533"; // Use a test number
+
+    // Format message with emojis, spacing, and better styling
+    const message = winningBid
+        ? `🏆 *Auction Ended!*\n\n`
+          + `📌 *Auction ID:*  \n ➤ _${auction.id}_\n\n`
+          + `📢 *Title:*  \n ➤ _${auction.title}_\n\n`
+          + `💰 *Winning Bid:*  \n ➤ _$${winningBid.amount}_\n\n`
+          + `👤 *Winning User:*  \n ➤ _${winningBid.bidder}_\n\n`
+          + `🎉 *Congratulations to the winner!* 🎊`
+        : `⚠️ *Auction Ended!*\n\n`
+          + `📌 *Auction ID:*  \n ➤ _${auction.id}_\n\n`
+          + `📢 *Title:*  \n ➤ _${auction.title}_\n\n`
+          + `❌ *No winning bids.*\n\n`
+          + `🔄 _Better luck next time!_`;
+
+    try {
+        await sendWhatsAppMessage(phoneNumber, message);
+        res.json({ success: true, message: "WhatsApp message sent" });
+    } catch (error) {
+        res.status(500).json({ error: "Failed to send WhatsApp message" });
+    }
+});
+
+  
 
 
 module.exports = router;

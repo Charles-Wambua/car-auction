@@ -200,23 +200,23 @@ const AuctionList = () => {
 
       {/* Auction Modal */}
       <Modal
-        title="Auction Details"
-        open={isModalVisible}
-        onCancel={handleModalClose}
-        footer={null}
-        centered
-        width={Math.min(window.innerWidth * 0.9, 1200)}
-        style={{ top: 20 }}
-        bodyStyle={{
-          padding: 20,
-          backgroundColor: '#f8f8f8',
-          borderRadius: '12px',
-          maxHeight: '80vh',
-          overflowY: 'auto'
-        }}
-      >
-        {selectedAuction && <AuctionModal auction={selectedAuction} bids={bids} />}
-      </Modal>
+  title="Auction Details"
+  open={isModalVisible}
+  onCancel={handleModalClose}
+  footer={null}
+  centered
+  width={Math.min(window.innerWidth * 0.9, 1200)}
+  style={{ top: 20 }}
+  bodyStyle={{
+    padding: 20,
+    backgroundColor: '#f8f8f8',
+    borderRadius: '12px',
+    maxHeight: '80vh',
+    overflowY: 'auto'
+  }}
+>
+  {selectedAuction && <AuctionModal key={selectedAuction.id} auction={selectedAuction} />}
+</Modal>
     </div>
   );
 };
