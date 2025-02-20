@@ -3,6 +3,7 @@ import axios from 'axios';
 import { message, Modal, Button, DatePicker, TimePicker } from 'antd';
 import AuctionModal from '../modals/auctionModal';
 import CountdownTimer from './countDownTimer';
+import { baseUrl } from '../services/AxiosConf';
 
 const AuctionList = () => {
   const [listings, setListings] = useState([]);
@@ -29,7 +30,7 @@ const AuctionList = () => {
 
   const fetchListings = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/auctions/listings', {
+      const response = await baseUrl.get('/api/auctions/listings', {
         headers: { 'Cache-Control': 'no-cache' }
       });
       setListings(response.data);
@@ -42,7 +43,7 @@ const AuctionList = () => {
   };
   const fetchBestBid = async () => {
     try {
-      const response = await axios.get('http://localhost:5000/api/bids/best', {
+      const response = await baseUrl.get('/api/bids/best', {
         headers: { 'Cache-Control': 'no-cache' }
       });
 
@@ -86,7 +87,7 @@ const AuctionList = () => {
     };
 
     try {
-      await axios.post('http://localhost:5000/api/auctions/auction-dates', auctionData);
+      await baseUrl.post('/api/auctions/auction-dates', auctionData);
       message.success('Auction dates set successfully!');
     } catch (error) {
       console.error('Error creating auction:', error);

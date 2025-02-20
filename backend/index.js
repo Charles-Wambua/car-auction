@@ -9,7 +9,15 @@ require('./services/whatsAppClient'); // This ensures WhatsApp client starts aut
 const app = express();
 
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: [
+      'http://34.34.167.144', 
+      'http://10.132.0.4', 
+      'http://localhost:3000'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}));
 app.use(morgan('dev'));
 
 app.use('/api/auctions', auctionRoutes);
