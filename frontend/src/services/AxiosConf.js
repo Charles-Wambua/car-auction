@@ -2,7 +2,7 @@
 import axios from 'axios';
 
 const baseUrl = axios.create({
-  baseURL: 'http://34.34.167.144:5000',
+  baseURL: 'http://34.78.213.218:5000',
   // baseURL: 'http://localhost:5000',
 });
 
