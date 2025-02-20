@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { message } from "antd";
 import CountdownTimer from "../components/countDownTimer";
+import { baseUrl } from "../services/AxiosConf";
 
 const AuctionModal = ({ auction, onClose }) => {
     const [status, setStatus] = useState("Upcoming");
@@ -20,7 +21,7 @@ const AuctionModal = ({ auction, onClose }) => {
 
     const fetchBids = async () => {
         try {
-            const response = await axios.get(`http://localhost:5000/api/bids/best/${auction.id}`);
+            const response = await baseUrl.get(`/api/bids/best/${auction.id}`);
             setBids(response.data);
 
         } catch (error) {
@@ -30,11 +31,11 @@ const AuctionModal = ({ auction, onClose }) => {
 
     const fetchWinningBid = async () => {
         try {
-            const response = await axios.get("http://localhost:5000/api/bids/best/");
+            const response = await baseUrl.get("/api/bids/best/");
             const highestBid = response.data.find(bid => bid.listing_id === auction.id);
             setWinningBid(highestBid || null);
 
-            await axios.post("http://localhost:5000/api/auctions/auction/end", {
+            await baseUrl.post("/api/auctions/auction/end", {
                 auction,
                 winningBid: highestBid,
             });
@@ -55,7 +56,7 @@ const AuctionModal = ({ auction, onClose }) => {
         }
 
         try {
-            await axios.post("http://localhost:5000/api/bids/bids", {
+            await baseUrl.post("/api/bids/bids", {
                 listing_id: auction.id,
                 amount: parseFloat(bidAmount),
                 bidder

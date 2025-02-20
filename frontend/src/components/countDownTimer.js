@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
+import {baseUrl} from '../services/AxiosConf'
 
 const CountdownTimer = ({ onCountdownUpdate }) => {
   const [latestAuction, setLatestAuction] = useState(null);
@@ -9,7 +10,7 @@ const CountdownTimer = ({ onCountdownUpdate }) => {
   // Fetch latest auction
   const fetchAuctions = async () => {
     try {
-      const res = await axios.get("http://localhost:5000/api/auctions/auction-dates");
+      const res = await baseUrl.get("/api/auctions/auction-dates");
       console.log("Fetched auctions:", res.data); // Debugging
 
       if (res.data.length > 0) {
